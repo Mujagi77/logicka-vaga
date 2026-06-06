@@ -40,4 +40,4 @@ Jedna loptica je teža ili lakša, a cilj je da je otkriješ pomoću ograničeno
 
 - HTML5
 - CSS3
-- JavaScript (vanilla)
+- JavaScript (vanilla).
