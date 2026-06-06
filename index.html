@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logička Vaga</title>
+
+<style>
+*{touch-action:manipulation}
+
+body{
+font-family:sans-serif;
+background:#0f172a;
+color:white;
+margin:0;
+padding:10px;
+display:flex;
+flex-direction:column;
+align-items:center;
+}
+
+#vaga-kontejner{
+position:relative;
+width:320px;
+height:180px;
+display:flex;
+justify-content:center;
+align-items:flex-end;
+}
+
+#vaga-stalak{position:absolute;bottom:0;width:100px;height:15px;background:#475569;border-radius:5px;}
+#vaga-stub{position:absolute;bottom:15px;width:12px;height:120px;background:#475569;}
+
+#vaga-poluga{
+position:absolute;
+top:65px;
+width:300px;
+height:8px;
+background:#cbd5e1;
+display:flex;
+justify-content:space-between;
+align-items:center;
+transition:transform .4s;
+transform-origin:center;
+}
+
+#sraf{
+position:absolute;
+top:70px;
+width:16px;height:16px;
+background:#94a3b8;
+border-radius:50%;
+}
+
+.tas{
+width:90px;height:90px;
+border:3px solid #38bdf8;
+border-radius:50%;
+display:flex;
+flex-wrap:wrap;
+justify-content:center;
+align-items:center;
+gap:2px;
+background:rgba(56,189,248,0.1);
+}
+
+.lopta{
+width:25px;height:25px;
+border-radius:50%;
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:12px;
+font-weight:bold;
+border:1px solid white;
+cursor:pointer;
+}
+
+#dno{
+width:100%;
+max-width:400px;
+min-height:50px;
+border:2px dashed #475569;
+display:flex;
+flex-wrap:wrap;
+justify-content:center;
+gap:6px;
+padding:5px;
+}
+
+#statistika{
+width:100%;
+max-width:400px;
+background:#1e293b;
+padding:6px;
+font-size:0.8rem;
+border-radius:8px;
+margin-top:5px;
+}
+
+.mini{
+width:18px;
+height:18px;
+border-radius:50%;
+display:inline-flex;
+justify-content:center;
+align-items:center;
+font-size:10px;
+margin:1px;
+border:1px solid white;
+color:white;
+overflow:hidden;
+position:relative;
+}
+
+.mini span{
+position:absolute;
+inset:0;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+button{
+margin:5px;
+padding:8px 15px;
+border:2px solid #38bdf8;
+background:transparent;
+color:#38bdf8;
+border-radius:6px;
+cursor:pointer;
+}
+
+.help-btn{
+position:absolute;
+top:10px;
+right:10px;
+width:28px;
+height:28px;
+border-radius:50%;
+border:2px solid #38bdf8;
+background:#1e293b;
+color:white;
+font-weight:bold;
+cursor:pointer;
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:10;
+}
+
+button{
+margin:5px;
+padding:8px 15px;
+border:2px solid #38bdf8;
+background:transparent;
+color:#38bdf8;
+border-radius:6px;
+cursor:pointer;
+transition: 0.15s;
+-webkit-tap-highlight-color: transparent;
+-webkit-appearance: none;
+appearance: none;
+}
+
+button:active{
+background: rgba(56, 189, 248, 0.2);
+transform: scale(0.97);
+}
+
+button:disabled{
+opacity:0.35;
+cursor:not-allowed;
+pointer-events: none;
+background: rgba(148, 163, 184, 0.2);
+transform: none !important;
+}
+
+button:focus{
+outline:none;
+}
+
+.kraj-mode #btn{
+display:none;
+}
+
+.kraj-mode #statistika{
+margin-top:2px;
+}
+
+#modal{
+display:none;
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.7);
+}
+
+#modal-box{
+position:absolute;
+top:50%;left:50%;
+transform:translate(-50%,-50%);
+background:#1e293b;
+padding:20px;
+border-radius:10px;
+border:2px solid #38bdf8;
+text-align:center;
+}
+
+.bez-brojeva .lopta{
+color:transparent !important;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Logička Vaga</h1>
+
+<label>
+Režim:
+<select id="mode">
+<option value="3">3 loptice</option>
+<option value="9" selected>9 loptica</option>
+</select>
+</label>
+
+<br>
+
+<label>
+<input type="checkbox" id="toggleBrojevi" checked onchange="toggleNumbers()">
+Prikaži brojeve
+</label>
+
+<button class="help-btn" onclick="showHelp()">?</button>
+
+<div id="vaga-kontejner">
+<div id="vaga-stalak"></div>
+<div id="vaga-stub"></div>
+<div id="sraf"></div>
+
+<div id="vaga-poluga">
+<div id="tas-L" class="tas" ondrop="drop(event,'L')" ondragover="event.preventDefault()" onclick="move('L')"></div>
+<div id="tas-D" class="tas" ondrop="drop(event,'D')" ondragover="event.preventDefault()" onclick="move('D')"></div>
+</div>
+</div>
+
+<div id="dno" ondrop="drop(event,'dno')" ondragover="event.preventDefault()" onclick="move('dno')"></div>
+
+<div id="statistika"></div>
+
+<button onclick="start()">NOVA IGRA</button>
+<button id="btn" onclick="weigh()">IZMERI</button>
+
+<button id="znamBtn" onclick="openZnam()" style="display:none;">Znam rešenje</button>
+
+<div id="panel" style="display:none;border:1px solid #38bdf8;padding:10px;margin-top:10px;">
+<h3>Ko je uljez?</h3>
+
+<button onclick="pick(-1)">-</button>
+<span id="pickNum" style="font-size:2rem;font-weight:bold;">1</span>
+<button onclick="pick(1)">+</button>
+
+<br><br>
+
+<select id="type">
+<option value="laksa">Lakša</option>
+<option value="teza">Teža</option>
+</select>
+
+<button onclick="check()">POTVRDI</button>
+</div>
+
+<div id="modal">
+  <div id="modal-box">
+    <h2 id="m-title"></h2>
+    <p id="m-text"></p>
+    <button onclick="modalOk()">OK</button>
+  </div>
+</div>
+
+<div id="confirm-modal" style="display:none;">
+  <div id="modal-box">
+    <h2 id="c-title"></h2>
+    <p id="c-text"></p>
+    <button onclick="confirmOk()">OK</button>
+    <button onclick="confirmNo()">NO</button>
+  </div>
+</div>
+
+<script>
+
+let game={
+active:false,
+sel:null,
+mode:9,
+fakeID:0,
+fakeType:'',
+stats:[],
+pick:1,
+moves:0,
+locked:false
+};
+
+let modalAction = null;
+
+function openZnam(){
+  document.getElementById("c-title").innerText = "Znam rešenje";
+  document.getElementById("c-text").innerText =
+  "Da li želiš da pređeš na unos rešenja bez daljih merenja?";
+
+  document.getElementById("confirm-modal").style.display = "block";
+}
+
+function confirmOk(){
+  document.getElementById("confirm-modal").style.display = "none";
+  document.getElementById("panel").style.display = "block";
+  game.locked = true;
+  game.active = false;
+document.getElementById("znamBtn").style.display = "none";
+document.getElementById("btn").style.display = "none";
+document.getElementById("btn").disabled = true;
+}
+
+function confirmNo(){
+  document.getElementById("confirm-modal").style.display = "none";
+}
+
+function modalOk(){
+  document.getElementById("modal").style.display = "none";
+
+  if(modalAction === "znam"){
+    document.getElementById("panel").style.display = "block";
+    game.locked = true;
+    game.active = false;
+  }
+
+  modalAction = null;
+}
+
+function modalNo(){
+  document.getElementById("modal").style.display = "none";
+  modalAction = null;
+}
+
+const colors=['#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#3b82f6','#8b5cf6','#d946ef','#f43f5e'];
+
+function modal(t,x){
+document.getElementById('m-title').innerText=t;
+document.getElementById('m-text').innerText=x;
+document.getElementById('modal').style.display='block';
+}
+
+function resetGame(){
+game.active=false;
+game.sel=null;
+game.stats=[];
+game.moves=0;
+game.locked=false;
+game.pick=1;
+
+document.getElementById('tas-L').innerHTML='';
+document.getElementById('tas-D').innerHTML='';
+document.getElementById('dno').innerHTML='';
+document.getElementById('statistika').innerHTML='';
+document.getElementById('panel').style.display='none';
+document.getElementById('panel').style.pointerEvents = 'auto';
+document.getElementById('pickNum').innerText = 1;
+document.getElementById('type').value = 'laksa';
+document.getElementById('vaga-poluga').style.transform='rotate(0deg)';
+document.body.classList.remove('kraj-mode');
+document.getElementById("znamBtn").style.display = "none";
+document.getElementById("btn").style.display = "inline-block";
+document.getElementById("btn").disabled = false;
+}
+
+function start(){
+resetGame();
+
+game.active=true;
+game.mode=parseInt(document.getElementById('mode').value);
+
+game.fakeID=Math.floor(Math.random()*game.mode)+1;
+game.fakeType=Math.random()<0.5?'laksa':'teza';
+
+for(let i=1;i<=game.mode;i++){
+let b=document.createElement('div');
+b.className='lopta';
+b.innerText=i;
+b.style.background=colors[i-1];
+b.draggable=true;
+
+b.ondragstart=()=>game.sel=b;
+b.onclick=(e)=>{e.stopPropagation();game.sel=b;}
+
+document.getElementById('dno').appendChild(b);
+}
+
+document.getElementById("znamBtn").style.display = "inline-block";
+
+}
+
+document.getElementById('mode').addEventListener('change',resetGame);
+
+function drop(e,w){
+e.preventDefault();
+move(w);
+}
+
+function move(w){
+if(!game.active || game.locked) return;
+if(!game.sel) return;
+
+if(w==='L') document.getElementById('tas-L').appendChild(game.sel);
+else if(w==='D') document.getElementById('tas-D').appendChild(game.sel);
+else document.getElementById('dno').appendChild(game.sel);
+
+game.sel=null;
+}
+
+function weigh(){
+
+if(game.locked) return;
+
+
+let L=[...document.getElementById('tas-L').children];
+let D=[...document.getElementById('tas-D').children];
+
+if(L.length===0||D.length===0){
+modal("Greška","Popuni oba tasa");
+return;
+}
+
+let tL=0,tD=0;
+
+L.forEach(x=>{
+let i=parseInt(x.innerText);
+tL+=(i===game.fakeID)?(game.fakeType==='teza'?2:0.5):1;
+});
+
+D.forEach(x=>{
+let i=parseInt(x.innerText);
+tD+=(i===game.fakeID)?(game.fakeType==='teza'?2:0.5):1;
+});
+
+let res=tL>tD?"Levo teže":tD>tL?"Desno teže":"Ravnoteža";
+
+let diff=tD-tL;
+let angle=0;
+if(diff>0) angle=8;
+else if(diff<0) angle=-8;
+
+document.getElementById('vaga-poluga').style.transform=`rotate(${angle}deg)`;
+
+game.stats.push({
+L:L.map(x=>x.innerText),
+D:D.map(x=>x.innerText),
+res:res
+});
+
+game.moves++;
+updateStats();
+
+if(game.moves >= 3){
+  game.locked = true;
+  game.active = false;
+
+  document.getElementById('btn').disabled = true;
+  document.getElementById("znamBtn").style.display = "none";
+  document.getElementById('btn').style.display = "none";
+
+  document.body.classList.add('kraj-mode');
+  document.getElementById('panel').style.display = 'block';
+
+  modal("KRAJ","Sada pogodi uljeza");
+
+  return;
+}
+}
+function updateStats(){
+
+const showNumbers=document.getElementById('toggleBrojevi').checked;
+
+document.getElementById('statistika').innerHTML=
+game.stats.map((s,i)=>{
+
+let Lhtml=s.L.map(v=>{
+let el=[...document.querySelectorAll('.lopta')].find(l=>l.innerText==v);
+let c=el?.style.background||'#fff';
+return `<span class="mini" style="background:${c}">
+<span>${showNumbers?v:''}</span>
+</span>`;
+}).join('');
+
+let Dhtml=s.D.map(v=>{
+let el=[...document.querySelectorAll('.lopta')].find(l=>l.innerText==v);
+let c=el?.style.background||'#fff';
+return `<span class="mini" style="background:${c}">
+<span>${showNumbers?v:''}</span>
+</span>`;
+}).join('');
+
+return `<div>M${i+1}: ${Lhtml} vs ${Dhtml} → <b>${s.res}</b></div>`;
+}).join('');
+}
+
+function pick(d){
+game.pick+=d;
+if(game.pick<1)game.pick=1;
+if(game.pick>game.mode)game.pick=game.mode;
+document.getElementById('pickNum').innerText=game.pick;
+}
+
+function check(){
+
+document.getElementById('panel').style.pointerEvents = 'none';
+
+let ok=
+game.pick===game.fakeID &&
+document.getElementById('type').value===game.fakeType;
+
+let tip=game.fakeType==='teza'?'TEŽA':'LAKŠA';
+
+modal(
+ok?"POBEDA":"GREŠKA",
+`${ok?"TAČNO":"NETAČNO"}! Uljez je ${game.fakeID} i bio je ${tip}.`
+);
+
+game.active=false;
+game.locked=true;
+}
+
+function toggleNumbers(){
+document.body.classList.toggle(
+'bez-brojeva',
+!document.getElementById('toggleBrojevi').checked
+);
+
+updateStats();
+}
+
+function showHelp(){
+
+let mode = parseInt(document.getElementById('mode').value);
+
+document.getElementById('m-title').innerText = "UPUTSTVO";
+
+document.getElementById('m-text').innerText =
+
+`- Imaš ${mode} loptica
+- Jedna je teža ili lakša
+- Imaš 3 merenja
+- Nađi uljeza
+
+autor: mujagi77   v1.0`;
+
+document.getElementById('modal').style.display='block';
+}
+
+</script>
+
+</body>
+</html>
