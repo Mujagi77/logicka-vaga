@@ -121,16 +121,6 @@ justify-content:center;
 align-items:center;
 }
 
-button{
-margin:5px;
-padding:8px 15px;
-border:2px solid #38bdf8;
-background:transparent;
-color:#38bdf8;
-border-radius:6px;
-cursor:pointer;
-}
-
 .help-btn{
 position:absolute;
 top:10px;
@@ -193,7 +183,7 @@ display:none;
 position:fixed;
 top:0;left:0;
 width:100%;height:100%;
-background:rgba(0,0,0,0.7);
+background:rgba(0,0,0,0.3);
 }
 
 #modal-box{
@@ -205,6 +195,53 @@ padding:20px;
 border-radius:10px;
 border:2px solid #38bdf8;
 text-align:center;
+}
+
+#confirm-modal-box{
+position:absolute;
+top:50%;left:50%;
+transform:translate(-50%,-50%);
+background:#1e293b;
+padding:20px;
+border-radius:10px;
+border:2px solid #38bdf8;
+text-align:center;
+}
+
+#end-modal{
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.2);
+  z-index: 9999;
+  pointer-events: auto;
+}
+
+#end-modal-box{
+  position:absolute;
+  top:5%;
+  left:50%;
+  transform:translate(-50%,0);
+
+  background:#1e293b;
+  padding:5px;
+
+  border-radius:8px;
+  border:2px solid #38bdf8;
+  text-align:center;
+
+  width:120px;
+  max-width:75%;
+
+  font-size:0.7rem;
+  line-height:1.1;
+}
+
+#modal, #confirm-modal{
+  z-index: 1000;
 }
 
 .bez-brojeva .lopta{
@@ -280,11 +317,19 @@ Prikaži brojeve
 </div>
 
 <div id="confirm-modal" style="display:none;">
-  <div id="modal-box">
+  <div id="confirm-modal-box">
     <h2 id="c-title"></h2>
     <p id="c-text"></p>
     <button onclick="confirmOk()">OK</button>
     <button onclick="confirmNo()">NO</button>
+  </div>
+</div>
+
+<div id="end-modal" style="display:none;">
+  <div id="end-modal-box">
+    <h2 id="end-title"></h2>
+    <p id="end-text"></p>
+    <button onclick="endOk()">OK</button>
   </div>
 </div>
 
@@ -301,6 +346,16 @@ pick:1,
 moves:0,
 locked:false
 };
+
+let draggingNow = false;
+
+let lastX = 0;
+let lastY = 0;
+
+document.addEventListener("pointermove", (e) => {
+  lastX = e.clientX;
+  lastY = e.clientY;
+});
 
 let modalAction = null;
 
@@ -344,6 +399,17 @@ function modalNo(){
 }
 
 const colors=['#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#3b82f6','#8b5cf6','#d946ef','#f43f5e'];
+
+function nearZone(el, x, y, padding = 60){
+  const r = el.getBoundingClientRect();
+
+  return (
+    x >= r.left - padding &&
+    x <= r.right + padding &&
+    y >= r.top - padding &&
+    y <= r.bottom + padding
+  );
+}
 
 function modal(t,x){
 document.getElementById('m-title').innerText=t;
@@ -472,7 +538,9 @@ if(game.moves >= 3){
   document.body.classList.add('kraj-mode');
   document.getElementById('panel').style.display = 'block';
 
-  modal("KRAJ","Sada pogodi uljeza");
+  document.getElementById("end-title").innerText = "KRAJ";
+document.getElementById("end-text").innerText = "Sada pogodi uljeza";
+document.getElementById("end-modal").style.display = "block";
 
   return;
 }
@@ -521,10 +589,23 @@ document.getElementById('type').value===game.fakeType;
 
 let tip=game.fakeType==='teza'?'TEŽA':'LAKŠA';
 
-modal(
-ok?"POBEDA":"GREŠKA",
-`${ok?"TAČNO":"NETAČNO"}! Uljez je ${game.fakeID} i bio je ${tip}.`
-);
+if(ok){
+
+  document.getElementById("end-title").innerText = "POBEDA";
+  document.getElementById("end-text").innerText =
+  `TAČNO! Uljez je ${game.fakeID} i bio je ${tip}.`;
+
+}else{
+
+  document.getElementById("end-title").innerText = "GREŠKA";
+  document.getElementById("end-text").innerText =
+  `NETAČNO! Uljez je ${game.fakeID} i bio je ${tip}.`;
+
+}
+
+document.getElementById("end-modal").style.display = "block";
+
+
 
 game.active=false;
 game.locked=true;
@@ -539,7 +620,12 @@ document.body.classList.toggle(
 updateStats();
 }
 
+function endOk(){
+  document.getElementById("end-modal").style.display = "none";
+}
+
 function showHelp(){
+
 
 let mode = parseInt(document.getElementById('mode').value);
 
@@ -556,6 +642,27 @@ autor: mujagi77   v1.0`;
 
 document.getElementById('modal').style.display='block';
 }
+
+document.addEventListener("dragend", (e) => {
+  if(!game.active || game.locked) return;
+  if(!game.sel) return;
+
+  const x = e.clientX || lastX;
+  const y = e.clientY || lastY;
+
+  const L = document.getElementById("tas-L");
+  const D = document.getElementById("tas-D");
+
+  if(nearZone(L, x, y, 70)){
+    move("L");
+  }
+  else if(nearZone(D, x, y, 70)){
+    move("D");
+  }
+  else {
+    move("dno");
+  }
+});
 
 </script>
 
